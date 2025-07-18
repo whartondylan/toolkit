@@ -149,16 +149,16 @@ async function getCommands(
     IS_WINDOWS
 
   if (BSD_TAR_ZSTD && type !== 'create') {
-    args = [[...compressionArgs].join(' '), [...tarArgs].join(' ')]
+    args = [compressionArgs, tarArgs]
   } else {
-    args = [[...tarArgs].join(' '), [...compressionArgs].join(' ')]
+    args = [tarArgs, compressionArgs]
   }
 
   if (BSD_TAR_ZSTD) {
-    return args
+    return args.flat()
   }
 
-  return [args.join(' ')]
+  return args.flat()
 }
 
 function getWorkingDirectory(): string {
@@ -248,13 +248,14 @@ async function getCompressionProgram(
 async function execCommands(commands: string[], cwd?: string): Promise<void> {
   for (const command of commands) {
     try {
-      await exec(command, undefined, {
+      const [tool, ...args] = command
+      await exec(tool, args, {
         cwd,
         env: {...(process.env as object), MSYS: 'winsymlinks:nativestrict'}
       })
     } catch (error) {
       throw new Error(
-        `${command.split(' ')[0]} failed with error: ${error?.message}`
+        `${command[0]} failed with error: ${error?.message}`
       )
     }
   }
